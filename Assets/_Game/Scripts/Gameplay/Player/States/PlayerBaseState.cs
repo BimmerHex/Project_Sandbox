@@ -12,51 +12,33 @@ namespace Game.Gameplay.Player
             StateMachine = stateMachine;
         }
         
-        /// <summary>
-        /// Yerçekimini hesaplar ama CharacterController'a uygulamaz.
-        /// Uygulama işi Move metodunda yapılır.
-        /// </summary>
         protected void CalculateGravity()
         {
              if (StateMachine.Controller.isGrounded && StateMachine.VerticalVelocity < 0)
              {
-                 // Yerdeyken hafif negatif kuvvet uygulayarak yere yapışık kalmasını sağla
                  StateMachine.VerticalVelocity = -2f;
              }
              else
              {
-                 // Havadaysa yerçekimi uygula
                  StateMachine.VerticalVelocity += StateMachine.Gravity * Time.deltaTime;
              }
         }
 
         /// <summary>
-        /// Input verisine ve Kamera açısına göre karakteri hareket ettirir.
+        /// FPS Hareket Mantığı: Karakterin kendi yönüne göre hareket eder.
         /// </summary>
         protected void Move(float speed)
         {
             Vector3 movement = Vector3.zero;
 
-            // 1. Yatay Hareket (Input + Kamera)
+            // 1. Yatay Hareket (Local Space'e göre)
+            // transform.right = Karakterin sağı
+            // transform.forward = Karakterin ilerisi
             if (StateMachine.MovementInput != Vector2.zero)
             {
-                Vector3 forward = StateMachine.MainCameraTransform.forward;
-                Vector3 right = StateMachine.MainCameraTransform.right;
-
-                forward.y = 0;
-                right.y = 0;
-                forward.Normalize();
-                right.Normalize();
-
-                movement = (forward * StateMachine.MovementInput.y + right * StateMachine.MovementInput.x).normalized;
+                movement = (StateMachine.transform.right * StateMachine.MovementInput.x + 
+                            StateMachine.transform.forward * StateMachine.MovementInput.y).normalized;
                 movement *= speed;
-
-                // Karakteri döndür
-                Quaternion targetRotation = Quaternion.LookRotation(movement);
-                StateMachine.transform.rotation = Quaternion.Slerp(
-                    StateMachine.transform.rotation, 
-                    targetRotation, 
-                    StateMachine.RotationSpeed * Time.deltaTime);
             }
 
             // 2. Dikey Hareket (Gravity / Jump)
@@ -64,6 +46,31 @@ namespace Game.Gameplay.Player
 
             // 3. Hareketi Uygula
             StateMachine.Controller.Move(movement * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// FPS Bakış Mantığı: 
+        /// Mouse X -> Karakteri (Gövdeyi) döndürür.
+        /// Mouse Y -> CameraRoot'u (Kafayı) döndürür.
+        /// </summary>
+        protected void Look()
+        {
+            float deltaTime = Time.deltaTime;
+            
+            // MouseSensitivityMultiplier ile çarparak pixel delta'yı dengeledik.
+            // Gamepad için ilerde IsGamepad kontrolü yapıp farklı çarpan kullanabiliriz.
+            float mouseX = StateMachine.LookInput.x * StateMachine.LookSensitivityX * StateMachine.MouseSensitivityMultiplier * deltaTime;
+            StateMachine.transform.Rotate(Vector3.up * mouseX);
+
+            float mouseY = StateMachine.LookInput.y * StateMachine.LookSensitivityY * StateMachine.MouseSensitivityMultiplier * deltaTime;
+            
+            StateMachine.CameraPitch -= mouseY; 
+            
+            StateMachine.CameraPitch = Mathf.Clamp(StateMachine.CameraPitch, 
+                -StateMachine.MaxLookUpAngle, 
+                StateMachine.MaxLookDownAngle);
+
+            StateMachine.CameraRoot.localRotation = Quaternion.Euler(StateMachine.CameraPitch, 0f, 0f);
         }
     }
 }

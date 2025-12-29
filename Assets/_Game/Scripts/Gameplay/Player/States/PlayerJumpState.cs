@@ -8,23 +8,21 @@ namespace Game.Gameplay.Player
 
         protected override void OnEnter()
         {
-            // Debug.Log("Entered State: Jump");
-            
-            // Fizik formülü: v = sqrt(h * -2 * g)
+            // Zıplama gücü uygula
             StateMachine.VerticalVelocity = Mathf.Sqrt(StateMachine.JumpForce * -2f * StateMachine.Gravity);
         }
 
         protected override void OnUpdate()
         {
-            // Havada hareket etmeye izin veriyoruz (Air Control)
-            // İstenirse hızı StateMachine.MoveSpeed ile sınırlayabiliriz (Sprint yapamasın diye)
+            // Havada da bakış atabiliriz
+            Look();
+            
+            // Havada hareket (Air Control)
             Move(StateMachine.MoveSpeed);
             
-            // Yerçekimi uygula (Move içinde uygulanacak ama hesaplanması lazım)
+            // Yerçekimi ve iniş kontrolü
             StateMachine.VerticalVelocity += StateMachine.Gravity * Time.deltaTime;
 
-            // Yere düştük mü?
-            // VerticalVelocity <= 0 kontrolü, zıpladığımız an yere değiyor sayılmamamız için önemli.
             if (StateMachine.Controller.isGrounded && StateMachine.VerticalVelocity <= 0f)
             {
                 StateMachine.SwitchState(StateMachine.FreeLookState);

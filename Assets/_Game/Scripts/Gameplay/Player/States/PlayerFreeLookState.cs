@@ -10,8 +10,6 @@ namespace Game.Gameplay.Player
 
         protected override void OnEnter()
         {
-            // Debug.Log("Entered State: FreeLook");
-            
             StateMachine.InputReader.SprintEvent += OnSprintStarted;
             StateMachine.InputReader.SprintCancelledEvent += OnSprintEnded;
             StateMachine.InputReader.JumpEvent += OnJump;
@@ -26,10 +24,13 @@ namespace Game.Gameplay.Player
 
         protected override void OnUpdate()
         {
-            // Yerdeyken yerçekimi hesapla (Yere yapışık kalmak için)
+            // FPS Bakışı
+            Look();
+
+            // Yerçekimi
             CalculateGravity();
             
-            // Hareket et
+            // Hareket
             float currentSpeed = _isSprinting ? StateMachine.SprintSpeed : StateMachine.MoveSpeed;
             Move(currentSpeed);
         }
