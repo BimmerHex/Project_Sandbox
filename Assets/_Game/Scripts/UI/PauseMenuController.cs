@@ -23,7 +23,6 @@ namespace Game.UI
 
         private void OnEnable()
         {
-            // GameManager'ın varlığını kontrol et (Direkt Gameplay sahnesinden başlatılırsa null olabilir)
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.OnPauseToggled += HandlePauseToggled;
@@ -59,8 +58,8 @@ namespace Game.UI
         private void OnMainMenuClicked()
         {
             // Önce zamanı düzelt, yoksa menüde oyun donuk kalır
-            Time.timeScale = 1f; 
-            GameManager.Instance.SetState(GameManager.GameState.MainMenu);
+            Time.timeScale = 1f;
+            
             SceneLoaderUtils.LoadScene(_mainMenuSceneName);
         }
 

@@ -1,6 +1,6 @@
 // Assets/_Game/Scripts/Systems/GameManager.cs
 using UnityEngine;
-using UnityEngine.SceneManagement; // Sahne olaylarını dinlemek için gerekli
+using UnityEngine.SceneManagement; 
 using Game.Input;
 using System;
 
@@ -40,8 +40,6 @@ namespace Game.Systems
 
         private void OnEnable()
         {
-            // Unity'nin sahne yükleme olayına abone oluyoruz.
-            // Bu sayede sahne değiştiğinde state'i otomatik güncelleyeceğiz.
             SceneManager.sceneLoaded += OnSceneLoaded;
 
             if(_inputReader != null)
@@ -67,13 +65,8 @@ namespace Game.Systems
             if (_inputReader != null) _inputReader.PauseEvent += HandlePauseInput;
         }
 
-        /// <summary>
-        /// Sahne yüklendiğinde otomatik çalışır ve oyunun State'ini belirler.
-        /// </summary>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            // Sahne ismine göre State ataması yapıyoruz.
-            // Bu isimlerin Unity Build Settings'deki sahne isimleriyle birebir aynı olması gerekir.
             switch (scene.name)
             {
                 case "MainMenu":
@@ -86,8 +79,6 @@ namespace Game.Systems
                     SetState(GameState.Booting);
                     break;
                 default:
-                    // Bilinmeyen bir sahne ise (örn: test sahnesi) Gameplay varsayabiliriz
-                    // veya log basabiliriz.
                     Debug.LogWarning($"⚠️ Unknown scene loaded: {scene.name}. State logic might need update.");
                     break;
             }
@@ -95,17 +86,20 @@ namespace Game.Systems
 
         public void SetState(GameState newState)
         {
+            // IDEMPOTENCY CHECK (Aynı durumdaysak tekrar işlem yapma)
+            // Bu kontrol, gereksiz logları ve event tetiklemelerini önler.
+            if (CurrentState == newState) return;
+
             CurrentState = newState;
             Debug.Log($"🔄 Game State Changed: {CurrentState}");
             
-            // State değiştiğinde Input modunu da garanti altına alalım
             if (_inputReader != null)
             {
                 switch (CurrentState)
                 {
                     case GameState.MainMenu:
                         _inputReader.EnableUIInput();
-                        Time.timeScale = 1f; // Menüye dönünce zamanın akmasını garanti et
+                        Time.timeScale = 1f; 
                         Cursor.lockState = CursorLockMode.None;
                         Cursor.visible = true;
                         break;
@@ -121,7 +115,6 @@ namespace Game.Systems
 
         private void HandlePauseInput()
         {
-            // State kontrolü artık doğru çalışacak çünkü OnSceneLoaded bunu güncelledi.
             if (CurrentState == GameState.Gameplay)
             {
                 TogglePause(true);
