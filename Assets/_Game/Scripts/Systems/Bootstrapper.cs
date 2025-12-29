@@ -1,44 +1,43 @@
+// Assets/_Game/Scripts/Systems/Bootstrapper.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
+using Game.Input; // Eklendi
 
 namespace Game.Systems
 {
-    /// <summary>
-    /// Bu script SADECE _Boot sahnesinde çalışır.
-    /// Gerekli sistemleri yükler ve ardından Menüye (veya bir sonraki sahneye) geçer.
-    /// </summary>
     public class Bootstrapper : MonoBehaviour
     {
         [Header("Settings")] 
         [SerializeField] private bool _loadMenuDirectly = true;
         [SerializeField] private string _menuSceneName = "MainMenu";
+        
+        [Header("Dependencies")]
+        [SerializeField] private InputReader _inputReader; // Eklendi
 
         private void Start()
         {
             Debug.Log("🚀 Boot Sequence Started...");
-            
             InitializeSystems();
         }
 
         private void InitializeSystems()
         {
-            // 1. GameManager Yoksa Oluştur (Prefab'den veya kodla)
+            // 1. GameManager Oluştur
             if (GameManager.Instance == null)
             {
                 GameObject gm = new GameObject("GameManager");
-                gm.AddComponent<GameManager>();
-                // GameManager kendi Awake() içinde DontDestroyOnLoad yapar.
+                GameManager gameManagerScript = gm.AddComponent<GameManager>();
+                
+                // Dependency Injection: InputReader'ı GameManager'a veriyoruz
+                gameManagerScript.SetInputReader(_inputReader);
             }
-
-            // 2. Diğer Sistemler (Audio, Input, Analytics) burada başlatılabilir.
-            // ...
+            else
+            {
+                GameManager.Instance.SetInputReader(_inputReader);
+            }
 
             Debug.Log("✅ All Systems Ready.");
             
-            // 3. Sonraki Sahneye Geç
             if (_loadMenuDirectly)
             {
                 LoadMenu();
@@ -47,7 +46,6 @@ namespace Game.Systems
 
         private void LoadMenu()
         {
-            Debug.Log($"➡️ Loading Scene: {_menuSceneName}");
             SceneManager.LoadSceneAsync(_menuSceneName);
         }
     }

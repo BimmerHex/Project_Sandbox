@@ -277,6 +277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.Systems.Bootstrapper
   _loadMenuDirectly: 1
   _menuSceneName: MainMenu
+  _inputReader: {fileID: 11400000, guid: 4a4211255f5c9b74ab95a9d07df275ac, type: 2}
 --- !u!4 &1849344942
 Transform:
   m_ObjectHideFlags: 0

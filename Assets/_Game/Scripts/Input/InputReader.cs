@@ -1,3 +1,4 @@
+// Assets/_Game/Scripts/Input/InputReader.cs
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
@@ -11,8 +12,8 @@ namespace Game.Input
         public event Action<Vector2> MoveEvent;
         public event Action<Vector2> LookEvent;
         public event Action AttackEvent;
-        public event Action InteractEvent; // Performed (Hold bittiğinde veya tıklandığında)
-        public event Action InteractCancelledEvent; // Hold sırasında bırakılırsa
+        public event Action InteractEvent; 
+        public event Action InteractCancelledEvent;
         public event Action JumpEvent;
         public event Action JumpCancelledEvent;
         public event Action SprintEvent;
@@ -20,11 +21,7 @@ namespace Game.Input
         public event Action CrouchEvent;
         public event Action NextItemEvent;
         public event Action PreviousItemEvent;
-
-        // --- UI EVENTS ---
-        // UI eventlerini şimdilik genel tutuyoruz, genelde Unity EventSystem otomatik halleder
-        // ama özel menü kontrolleri için burayı kullanabiliriz.
-        public event Action PauseEvent; // Menu açma isteği (ESC/Start)
+        public event Action PauseEvent;
 
         private GameControls _gameControls;
 
@@ -37,7 +34,6 @@ namespace Game.Input
                 _gameControls.UI.SetCallbacks(this);
             }
             
-            // Varsayılan olarak Gameplay moduyla başla
             EnableGameplayInput();
         }
 
@@ -66,100 +62,68 @@ namespace Game.Input
 
         #region Player Actions Implementation
 
-        public void OnMove(InputAction.CallbackContext context)
-        {
-            MoveEvent?.Invoke(context.ReadValue<Vector2>());
-        }
-
-        public void OnLook(InputAction.CallbackContext context)
-        {
-            LookEvent?.Invoke(context.ReadValue<Vector2>());
-        }
-
+        public void OnMove(InputAction.CallbackContext context) => MoveEvent?.Invoke(context.ReadValue<Vector2>());
+        public void OnLook(InputAction.CallbackContext context) => LookEvent?.Invoke(context.ReadValue<Vector2>());
+        
         public void OnAttack(InputAction.CallbackContext context)
         {
-            if (context.phase == InputActionPhase.Performed)
-            {
-                AttackEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) AttackEvent?.Invoke();
         }
 
         public void OnInteract(InputAction.CallbackContext context)
         {
-            // Interact 'Hold' interaction içerdiği için:
-            // Performed: Hold süresi doldu (Başarılı etkileşim)
-            // Canceled: Hold süresi dolmadan bırakıldı
-            
-            if (context.phase == InputActionPhase.Performed)
-            {
-                InteractEvent?.Invoke();
-            }
-            else if (context.phase == InputActionPhase.Canceled)
-            {
-                InteractCancelledEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) InteractEvent?.Invoke();
+            else if (context.phase == InputActionPhase.Canceled) InteractCancelledEvent?.Invoke();
         }
 
         public void OnJump(InputAction.CallbackContext context)
         {
-            if (context.phase == InputActionPhase.Performed)
-            {
-                JumpEvent?.Invoke();
-            }
-            else if (context.phase == InputActionPhase.Canceled)
-            {
-                JumpCancelledEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) JumpEvent?.Invoke();
+            else if (context.phase == InputActionPhase.Canceled) JumpCancelledEvent?.Invoke();
         }
 
         public void OnSprint(InputAction.CallbackContext context)
         {
-            if (context.phase == InputActionPhase.Performed)
-            {
-                SprintEvent?.Invoke();
-            }
-            else if (context.phase == InputActionPhase.Canceled)
-            {
-                SprintCancelledEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) SprintEvent?.Invoke();
+            else if (context.phase == InputActionPhase.Canceled) SprintCancelledEvent?.Invoke();
         }
 
         public void OnCrouch(InputAction.CallbackContext context)
         {
-            if (context.phase == InputActionPhase.Performed)
-            {
-                CrouchEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) CrouchEvent?.Invoke();
         }
 
         public void OnNext(InputAction.CallbackContext context)
         {
-            if (context.phase == InputActionPhase.Performed)
-            {
-                NextItemEvent?.Invoke();
-            }
+            if (context.phase == InputActionPhase.Performed) NextItemEvent?.Invoke();
         }
 
         public void OnPrevious(InputAction.CallbackContext context)
         {
+            if (context.phase == InputActionPhase.Performed) PreviousItemEvent?.Invoke();
+        }
+
+        public void OnPause(InputAction.CallbackContext context)
+        {
             if (context.phase == InputActionPhase.Performed)
             {
-                PreviousItemEvent?.Invoke();
+                PauseEvent?.Invoke();
             }
         }
 
         #endregion
 
         #region UI Actions Implementation
-
+        // UI tarafındaki Cancel (ESC) tuşu da Pause/Unpause için kullanılabilir
+        // ancak biz Player Map'teki Pause'u ana tetikleyici yaptık.
         public void OnNavigate(InputAction.CallbackContext context) { }
         public void OnSubmit(InputAction.CallbackContext context) { }
         public void OnCancel(InputAction.CallbackContext context) 
         {
-            // UI modunda 'Cancel' (ESC/B) genelde menüyü kapatır veya geri gider.
-            // Ancak Gameplay modunda 'Pause' ihtiyacımız var.
-            // GameControls dosyasında Player haritasında Pause yoktu.
-            // İleride burayı güncelleyebiliriz.
+             if (context.phase == InputActionPhase.Performed)
+             {
+                 PauseEvent?.Invoke();
+             }
         }
         public void OnPoint(InputAction.CallbackContext context) { }
         public void OnClick(InputAction.CallbackContext context) { }
@@ -168,7 +132,6 @@ namespace Game.Input
         public void OnScrollWheel(InputAction.CallbackContext context) { }
         public void OnTrackedDevicePosition(InputAction.CallbackContext context) { }
         public void OnTrackedDeviceOrientation(InputAction.CallbackContext context) { }
-
         #endregion
     }
 }
