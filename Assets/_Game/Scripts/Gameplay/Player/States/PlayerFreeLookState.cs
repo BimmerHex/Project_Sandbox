@@ -4,68 +4,44 @@ namespace Game.Gameplay.Player
 {
     public class PlayerFreeLookState : PlayerBaseState
     {
-        // Event aboneliği için input değerini burada cache'liyoruz
-        private Vector2 _currentMovementInput;
+        private bool _isSprinting;
 
         public PlayerFreeLookState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
         protected override void OnEnter()
         {
-            Debug.Log("Entered State: FreeLook");
+            // Debug.Log("Entered State: FreeLook");
             
-            // Eventlere Abone Ol
-            StateMachine.InputReader.MoveEvent += OnMove;
+            StateMachine.InputReader.SprintEvent += OnSprintStarted;
+            StateMachine.InputReader.SprintCancelledEvent += OnSprintEnded;
+            StateMachine.InputReader.JumpEvent += OnJump;
         }
 
         protected override void OnExit()
         {
-            // Eventlerden Çık (Çok Önemli!)
-            StateMachine.InputReader.MoveEvent -= OnMove;
+            StateMachine.InputReader.SprintEvent -= OnSprintStarted;
+            StateMachine.InputReader.SprintCancelledEvent -= OnSprintEnded;
+            StateMachine.InputReader.JumpEvent -= OnJump;
         }
 
         protected override void OnUpdate()
         {
-            ApplyGravity();
-            HandleMovement();
+            // Yerdeyken yerçekimi hesapla (Yere yapışık kalmak için)
+            CalculateGravity();
+            
+            // Hareket et
+            float currentSpeed = _isSprinting ? StateMachine.SprintSpeed : StateMachine.MoveSpeed;
+            Move(currentSpeed);
         }
 
-        protected override void OnFixedUpdate()
+        protected override void OnFixedUpdate() { }
+
+        private void OnSprintStarted() => _isSprinting = true;
+        private void OnSprintEnded() => _isSprinting = false;
+
+        private void OnJump()
         {
-            // Fizik işlemleri gerekirse buraya
-        }
-
-        private void OnMove(Vector2 input)
-        {
-            _currentMovementInput = input;
-        }
-
-        private void HandleMovement()
-        {
-            if (_currentMovementInput == Vector2.zero) return;
-
-            // Kamera yönüne göre hareket
-            Vector3 forward = StateMachine.MainCameraTransform.forward;
-            Vector3 right = StateMachine.MainCameraTransform.right;
-
-            forward.y = 0;
-            right.y = 0;
-            forward.Normalize();
-            right.Normalize();
-
-            Vector3 moveDirection = (forward * _currentMovementInput.y + right * _currentMovementInput.x).normalized;
-
-            // Hareket
-            StateMachine.Controller.Move(moveDirection * StateMachine.MoveSpeed * Time.deltaTime);
-
-            // Dönüş
-            if (moveDirection != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                StateMachine.transform.rotation = Quaternion.Slerp(
-                    StateMachine.transform.rotation, 
-                    targetRotation, 
-                    StateMachine.RotationSpeed * Time.deltaTime);
-            }
+            StateMachine.SwitchState(StateMachine.JumpState);
         }
     }
 }
